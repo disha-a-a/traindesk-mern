@@ -1,4 +1,6 @@
-Dockerfile
+backend/package.json
+backend/package-lock.json
+Dockerfile*
 docker-compose.yml
 .git
 node_modules
