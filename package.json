@@ -1,0 +1,31 @@
+{
+  "name": "traindesk-mern",
+  "version": "1.0.0",
+  "description": "TrainDesk - Fullstack MERN Training Schedule Console",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
+    "seed": "npm run seed --prefix backend",
+    "server": "npm run dev --prefix backend",
+    "client": "npm run dev --prefix frontend",
+    "dev": "npm run dev --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "build": "npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "npm start --prefix backend"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5"
+  },
+  "keywords": [
+    "mern",
+    "react",
+    "express",
+    "mongoose",
+    "traindesk",
+    "vercel"
+  ]
+}
