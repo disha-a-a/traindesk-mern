@@ -22,6 +22,14 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+  // Fix Vercel serverless path rewrite if req.url was changed to /server.js
+  const forwardedPath = req.headers['x-matched-path'] || req.headers['x-now-route-matches'];
+  if (req.url === '/server.js' && forwardedPath) {
+    req.url = forwardedPath;
+  }
+  next();
+});
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
@@ -45,6 +53,11 @@ app.post('/api/seed', async (req, res) => {
 app.use('/api/trainers', trainerRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/sessions', sessionRoutes);
+
+// Direct mount fallback for serverless path rewrites
+app.use('/trainers', trainerRoutes);
+app.use('/schedules', scheduleRoutes);
+app.use('/sessions', sessionRoutes);
 
 // Production Static Serving
 const frontendDist = path.join(__dirname, '../frontend/dist');
@@ -73,11 +86,13 @@ const startServer = async () => {
   try {
     await connectDB();
 
-    // Check if seeding is needed
-    const trainerCount = await Trainer.countDocuments();
-    if (trainerCount === 0) {
-      console.log('[Server] No trainers found in DB. Auto-seeding initial prototype dataset...');
-      await seedDatabase();
+    // Check if MongoDB is connected and seeding is needed
+    if (Trainer.db?.readyState === 1) {
+      const trainerCount = await Trainer.countDocuments();
+      if (trainerCount === 0) {
+        console.log('[Server] No trainers found in DB. Auto-seeding initial prototype dataset...');
+        await seedDatabase();
+      }
     }
 
     app.listen(PORT, () => {

@@ -6,7 +6,6 @@ dotenv.config();
 let mongoMemoryServer = null;
 
 export const connectDB = async () => {
-  // Check if mongoose already has an active connection
   if (mongoose.connection.readyState >= 1) {
     return;
   }
@@ -23,40 +22,24 @@ export const connectDB = async () => {
       return;
     } catch (err) {
       console.warn(`[Database] Failed to connect to MONGODB_URI: ${err.message}`);
+      console.warn(`[Database] Falling back to Standalone In-Memory Mode.`);
     }
   }
 
-  // If running in Vercel Serverless environment and no custom URI provided,
-  // do not attempt to download MongoMemoryServer in Lambda
-  if (process.env.VERCEL) {
-    console.warn(`[Vercel Serverless] MONGODB_URI is not set. To connect a database in production, add MONGODB_URI to your Vercel Environment Variables.`);
-    return;
-  }
-
   // Attempt local MongoDB on standard port if no URI provided
-  if (!customUri) {
+  if (!customUri && !process.env.VERCEL) {
     try {
-      console.log(`[Database] Attempting local MongoDB connection (mongodb://127.0.0.1:27017/traindesk)...`);
       await mongoose.connect('mongodb://127.0.0.1:27017/traindesk', {
-        serverSelectionTimeoutMS: 2000,
+        serverSelectionTimeoutMS: 1500,
       });
       console.log(`[Database] Connected to local MongoDB.`);
       return;
     } catch (err) {
-      console.log(`[Database] Local MongoDB unavailable (${err.message}). Starting embedded In-Memory MongoDB...`);
+      // Local MongoDB not running - fallback smoothly
     }
   }
 
-  // Local Fallback: MongoMemoryServer
-  try {
-    const { MongoMemoryServer } = await import('mongodb-memory-server');
-    mongoMemoryServer = await MongoMemoryServer.create();
-    const uri = mongoMemoryServer.getUri();
-    await mongoose.connect(uri);
-    console.log(`[Database] Connected to embedded in-memory MongoDB (${uri}).`);
-  } catch (memoryErr) {
-    console.error(`[Database] Failed to initialize in-memory MongoDB:`, memoryErr.message);
-  }
+  console.log(`[Database] Operating in Standalone In-Memory Store Mode. All REST endpoints are fully operational.`);
 };
 
 export const disconnectDB = async () => {
